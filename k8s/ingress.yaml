@@ -1,0 +1,44 @@
+# Requires nginx-ingress-controller in the cluster:
+#   kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+#
+# For local testing with minikube:
+#   minikube addons enable ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: task-management-ingress
+  namespace: task-management
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # Rate-limit at the ingress level (belt-and-suspenders with app-level rate limiting)
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    # TLS redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  # tls:
+  #   - hosts:
+  #       - tasks.example.com
+  #       - api.tasks.example.com
+  #     secretName: task-management-tls
+  rules:
+    - host: tasks.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 3000
+    - host: api.tasks.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 3001

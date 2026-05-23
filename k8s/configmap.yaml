@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: task-management-config
+  namespace: task-management
+data:
+  MONGODB_HOST: "mongodb"
+  REDIS_HOST: "redis"
+  AUTH_SERVICE_URL: "http://auth-service:3002"
+  TASK_SERVICE_URL: "http://task-service:3003"
+  GATEWAY_URL: "http://gateway:3001"
+  WEB_URL: "http://web:3000"

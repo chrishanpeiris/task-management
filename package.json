@@ -1,0 +1,15 @@
+{
+  "name": "task-management",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "concurrently -n gw,auth,task,web -c cyan,blue,green,magenta \"npm run dev -w apps/gateway\" \"npm run dev -w apps/auth-service\" \"npm run dev -w apps/task-service\" \"npm run dev -w apps/web\"",
+    "build": "npm run build -w apps/gateway && npm run build -w apps/auth-service && npm run build -w apps/task-service && npm run build -w apps/web",
+    "typecheck": "npm run typecheck -w apps/gateway && npm run typecheck -w apps/auth-service && npm run typecheck -w apps/task-service && npm run typecheck -w apps/web",
+    "lint": "npm run lint -w apps/web",
+    "test": "npm run test -w apps/auth-service && npm run test -w apps/task-service"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: task-management
+spec:
+  selector:
+    app: gateway
+  ports:
+    - port: 3001
+      targetPort: 3001
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: task-management
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+        - name: gateway
+          image: ghcr.io/chrishanpeiris/task-management/gateway:latest
+          ports:
+            - containerPort: 3001
+          env:
+            - name: PORT
+              value: "3001"
+            - name: AUTH_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: task-management-config
+                  key: AUTH_SERVICE_URL
+            - name: TASK_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: task-management-config
+                  key: TASK_SERVICE_URL
+            - name: WEB_URL
+              value: "https://tasks.example.com"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: task-management-secrets
+                  key: JWT_SECRET
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi

@@ -1,0 +1,85 @@
+services:
+  mongodb:
+    image: mongo:7-jammy
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: apps/auth-service/Dockerfile
+    environment:
+      PORT: 3002
+      MONGODB_URI: mongodb://mongodb:27017/task-auth
+      JWT_SECRET: dev-secret-change-in-production
+      GATEWAY_URL: http://gateway:3001
+    ports:
+      - "3002:3002"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  task-service:
+    build:
+      context: .
+      dockerfile: apps/task-service/Dockerfile
+    environment:
+      PORT: 3003
+      MONGODB_URI: mongodb://mongodb:27017/task-tasks
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-secret-change-in-production
+      GATEWAY_URL: http://gateway:3001
+    ports:
+      - "3003:3003"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/gateway/Dockerfile
+    environment:
+      PORT: 3001
+      JWT_SECRET: dev-secret-change-in-production
+      AUTH_SERVICE_URL: http://auth-service:3002
+      TASK_SERVICE_URL: http://task-service:3003
+      WEB_URL: http://localhost:3000
+    ports:
+      - "3001:3001"
+    depends_on:
+      - auth-service
+      - task-service
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      NEXT_PUBLIC_GATEWAY_URL: http://localhost:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - gateway
+
+volumes:
+  mongo_data:
