@@ -4,7 +4,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import { User } from '../models/User';
 
 const router = Router();
-const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+const secret = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-change-in-production');
 
 // ── Register ─────────────────────────────────────────────────────────────────
 router.post('/register', async (req: Request, res: Response) => {
